@@ -13,6 +13,13 @@ var db = Bookshelf.initialize({
   }
 });
 
+//Clear Tables
+/*
+db.knex.schema.dropTable('urls');
+db.knex.schema.dropTable('clicks');
+db.knex.schema.dropTable('users');
+*/
+
 db.knex.schema.hasTable('urls').then(function(exists) {
   if (!exists) {
     db.knex.schema.createTable('urls', function (link) {
@@ -24,7 +31,7 @@ db.knex.schema.hasTable('urls').then(function(exists) {
       link.integer('visits');
       link.timestamps();
     }).then(function (table) {
-      console.log('Created Table', table);
+      console.log('Created \'urls\' Table', table);
     });
   }
 });
@@ -36,7 +43,7 @@ db.knex.schema.hasTable('clicks').then(function(exists) {
       click.integer('link_id');
       click.timestamps();
     }).then(function (table) {
-      console.log('Created Table', table);
+      console.log('Created \'clicks\' Table', table);
     });
   }
 });
@@ -45,5 +52,17 @@ db.knex.schema.hasTable('clicks').then(function(exists) {
 // Add additional schema definitions below
 /************************************************************/
 
+db.knex.schema.hasTable('users').then(function(exists) {
+  if (!exists) {
+    db.knex.schema.createTable('users', function (user) {
+      user.increments('id').primary();
+      user.string('username');
+      user.string('password');
+      user.timestamps();
+    }).then(function (table) {
+      console.log('Created \'users\' Table', table);
+    });
+  }
+});
 
 module.exports = db;

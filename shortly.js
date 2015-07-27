@@ -2,6 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
+var sessions = require('express-session');
 
 
 var db = require('./app/config');
@@ -15,6 +16,7 @@ var app = express();
 
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
+
 app.use(partials());
 // Parse JSON (uniform resource locators)
 app.use(bodyParser.json());
@@ -23,24 +25,24 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
 
-app.get('/', 
-function(req, res) {
-  res.render('index');
-});
+// app.get('/',
+// function(req, res) {
+//   res.render('index');
+// });
 
-app.get('/create', 
-function(req, res) {
-  res.render('index');
-});
+// app.get('/create',
+// function(req, res) {
+//   res.render('index');
+// });
 
-app.get('/links', 
-function(req, res) {
-  Links.reset().fetch().then(function(links) {
-    res.send(200, links.models);
-  });
-});
+// app.get('/links',
+// function(req, res) {
+//   Links.reset().fetch().then(function(links) {
+//     res.send(200, links.models);
+//   });
+// });
 
-app.post('/links', 
+app.post('/links',
 function(req, res) {
   var uri = req.body.url;
 
@@ -49,8 +51,10 @@ function(req, res) {
     return res.send(404);
   }
 
+  //Valid URL found
   new Link({ url: uri }).fetch().then(function(found) {
     if (found) {
+      //console.log('Valid URL found', uri); //' found.attributes:', found.attributes);
       res.send(200, found.attributes);
     } else {
       util.getUrlTitle(uri, function(err, title) {
@@ -59,6 +63,7 @@ function(req, res) {
           return res.send(404);
         }
 
+        //Valid Website Found
         var link = new Link({
           url: uri,
           title: title,
@@ -77,8 +82,38 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+app.get('/login', function(req,res) {
+  res.render('login');
+});
 
+app.get('/',
+function(req, res) {
+  if(util.session) {
+    res.render('index');
+  } else {
+    res.redirect('/login');
+  }
+});
 
+app.get('/create',
+function(req, res) {
+  if(util.session) {
+    res.render('index');
+  } else {
+    res.redirect('/login');
+  }
+});
+
+app.get('/links',
+function(req, res) {
+  if(util.session) {
+    Links.reset().fetch().then(function(links) {
+      res.send(200, links.models);
+    });
+  } else {
+    res.redirect('/login');
+  }
+});
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
