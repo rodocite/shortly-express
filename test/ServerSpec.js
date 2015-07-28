@@ -63,7 +63,7 @@ describe('', function() {
 
     var requestWithSession = request.defaults({jar: true});
 
-    xbeforeEach(function(done){      // create a user that we can then log-in
+    beforeEach(function(done){      // create a user that we can then log-in
       new User({
           'username': 'Phillip',
           'password': 'Phillip'
@@ -148,7 +148,7 @@ describe('', function() {
 
     }); // 'Shortening links'
 
-    xdescribe('With previously saved urls:', function(){
+    describe('With previously saved urls:', function(){
 
       var link;
 
@@ -241,7 +241,7 @@ console.log('BEGIN CUSTOM TESTS');
 
   }); // 'Privileged Access'
 
-  xdescribe('Account Creation:', function(){
+  describe('Account Creation:', function(){
 
     it('Signup creates a user record', function(done) {
       var options = {
@@ -289,7 +289,7 @@ console.log('BEGIN CUSTOM TESTS');
 
   }); // 'Account Creation'
 
-  xdescribe('Account Login:', function(){
+  describe('Account Login:', function(){
 
     var requestWithSession = request.defaults({jar: true});
 

@@ -105,23 +105,98 @@ function(req, res) {
 
 app.get('/links',
 function(req, res) {
-  if(util.session) {
+  //if(util.session) {
     Links.reset().fetch().then(function(links) {
       res.send(200, links.models);
     });
-  } else {
-    res.redirect('/login');
-  }
+  //} else {
+  //  res.redirect('/login');
+  //}
+});
+
+app.get('/signup',
+function(req, res) {
+  res.render('signup');
+});
+
+//POST from Login: Read the username and the password
+app.post('/login',                          //save the username and pwd in temporary variables and query the users db for authentication
+function(req, res) {
+  //console.log('POST request received. Login Information:');
+  //console.log('Username',req.body.username, 'Password:',req.body.password);
+  //query for username and password
+    //if username AND password
+      //redirect to index
+    //else
+      //display incorrect username and password combination
+  var username = req.body.username;
+  var password = req.body.password;
+  var table = 'users';
+
+  util.isUser(username, password, table, function(found) {
+    if(found) {
+      console.log('Found', username, ' in table:', table);
+      //util.session = true;                                                  //UNCOMMENT
+      res.redirect('/');
+    } else {
+      console.log('Could not find', username, ' in table:', table);
+      res.redirect('/login');
+    }
+  });
+});
+
+app.post('/signup',
+function(req, res) {
+
+  var username = req.body.username;
+  var password = req.body.password;
+  var table = 'users';
+
+  util.isUser(username, password, table, function(found) {
+    if(found) {
+      console.log('Found', username, ' in table:', table, ' Signup failed.');
+      res.redirect('/login');
+    } else {
+      new User({
+        username: username,
+        password: password
+      }).save();
+      console.log('SignUp Successful.');
+      res.redirect('/');
+    }
+  });
 });
 
 /************************************************************/
 // Testing the Database
 /************************************************************/
 
-var us = new User({
-          username: 'Raghav',
-          password: 'meatlesspatty',
-        }).save();
+// var us = new User({
+//           username: 'Raghav',
+//           password: 'meatlesspatty',
+//         }).save();
+
+// var username = 'Raghav';
+// var table = 'users';
+// var password = 'meatlesspatty';
+
+// util.isUser(username, password, table, function(found) {
+//   if(found) {
+//     console.log('Found', username, ' in table:', table);
+//   } else {
+//     console.log('Could not find', username, ' in table:', table);
+//   }
+// });
+
+ // var result = db.knex('users')
+ //                .where('username', '=', target).then(function(result) {
+ //                  console.log('Fetching ',target,':',result[0]['username']);
+ //                }).catch(function(err) {
+ //                  console.log('Error Fetching',target);
+ //                });
+
+// console.log('Fetching Raghav:',result);
+
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail

@@ -65,7 +65,4 @@ db.knex.schema.hasTable('users').then(function(exists) {
   }
 });
 
-// db.knex('users').insert({username: 'Raghav', password: 'meatlesspatty'});
-
-
 module.exports = db;
