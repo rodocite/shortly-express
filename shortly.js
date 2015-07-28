@@ -24,25 +24,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
 
-// app.get('/',
-// function(req, res) {
-//   res.render('index');
-// });
-
-// app.get('/create',
-// function(req, res) {
-//   res.render('index');
-// });
-
-// app.get('/links',
-// function(req, res) {
-//   Links.reset().fetch().then(function(links) {
-//     res.send(200, links.models);
-//   });
-// });
-
 app.post('/links',
 function(req, res) {
+  console.log('POST request to /links received.');
   var uri = req.body.url;
 
   if (!util.isValidUrl(uri)) {
@@ -81,8 +65,13 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
-app.get('/login', function(req,res) {
+app.get('/login', function(req, res) {
   res.render('login');
+});
+
+app.get('/logout',function(req, res) {
+  util.session = false;
+  res.redirect('/login');
 });
 
 app.get('/',
@@ -105,13 +94,13 @@ function(req, res) {
 
 app.get('/links',
 function(req, res) {
-  //if(util.session) {
+  if(util.session) {
     Links.reset().fetch().then(function(links) {
       res.send(200, links.models);
     });
-  //} else {
-  //  res.redirect('/login');
-  //}
+  } else {
+   res.redirect('/login');
+  }
 });
 
 app.get('/signup',
@@ -122,28 +111,36 @@ function(req, res) {
 //POST from Login: Read the username and the password
 app.post('/login',                          //save the username and pwd in temporary variables and query the users db for authentication
 function(req, res) {
-  //console.log('POST request received. Login Information:');
-  //console.log('Username',req.body.username, 'Password:',req.body.password);
-  //query for username and password
-    //if username AND password
-      //redirect to index
-    //else
-      //display incorrect username and password combination
   var username = req.body.username;
   var password = req.body.password;
   var table = 'users';
 
+  util.encrypt(password, function(hash) {
+    util.isUser(username, hash, table, function(found) {
+      if(found) {
+        console.log('Found', username, ' in table:', table);
+        util.session = true;                                                  //UNCOMMENT
+        res.redirect('/');
+      } else {
+        console.log('Could not find', username, ' in table:', table);
+        res.redirect('/login');
+      }
+    });
+  });
+});
+
+/*
   util.isUser(username, password, table, function(found) {
     if(found) {
       console.log('Found', username, ' in table:', table);
-      //util.session = true;                                                  //UNCOMMENT
+      util.session = true;                                                  //UNCOMMENT
       res.redirect('/');
     } else {
       console.log('Could not find', username, ' in table:', table);
       res.redirect('/login');
     }
   });
-});
+*/
 
 app.post('/signup',
 function(req, res) {
@@ -152,20 +149,27 @@ function(req, res) {
   var password = req.body.password;
   var table = 'users';
 
-  util.isUser(username, password, table, function(found) {
-    if(found) {
-      console.log('Found', username, ' in table:', table, ' Signup failed.');
-      res.redirect('/login');
-    } else {
-      new User({
-        username: username,
-        password: password
-      }).save();
-      console.log('SignUp Successful.');
-      res.redirect('/');
-    }
+  util.encrypt(password, function(hash) {
+    util.isUser(username, hash, table, function(found) {
+      if(found) {
+        console.log('Found', username, ' in table:', table, ' Signup failed.');
+        res.redirect('/login');
+      } else {
+        //encrypt password
+        //upon success make a new User and save
+         console.log(password, ' hashes to: ', hash);
+         new User({
+           username: username,
+           password: hash
+         }).save().then(function() {
+           console.log('SignUp Successful.');
+           res.redirect('/');
+         });
+        }
+     });
   });
 });
+
 
 /************************************************************/
 // Testing the Database
@@ -196,6 +200,25 @@ function(req, res) {
  //                });
 
 // console.log('Fetching Raghav:',result);
+
+/************************************************************/
+// Testing the Encryption
+/************************************************************/
+// var bcrypt = require('bcrypt');
+// var password = 'meatlesspatty';
+// // var code;
+// util.encrypt(password, function(hash){
+//   console.log(password, ' hashes to: ',hash);
+//   code = hash;
+// });
+// util.encrypt(password, function(hash){
+//   console.log(password, ' hashes to: ',hash);
+//   code = hash;
+// });
+
+// bcrypt.compare(password, code, function(err, res) {
+//   if(res) { console.log(code,' mapped to', password); }
+// });
 
 
 /************************************************************/
