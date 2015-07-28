@@ -5,8 +5,8 @@ var db = Bookshelf.initialize({
   client: 'sqlite3',
   connection: {
     host: '127.0.0.1',
-    user: 'your_database_user',
-    password: 'password',
+    user: 'ragrodo',
+    password: 'ragrodo',
     database: 'shortlydb',
     charset: 'utf8',
     filename: path.join(__dirname, '../db/shortly.sqlite')
@@ -14,11 +14,11 @@ var db = Bookshelf.initialize({
 });
 
 //Clear Tables
-/*
-db.knex.schema.dropTable('urls');
-db.knex.schema.dropTable('clicks');
-db.knex.schema.dropTable('users');
-*/
+
+// db.knex.schema.dropTable('urls');
+// db.knex.schema.dropTable('clicks');
+// db.knex.schema.dropTable('users');
+
 
 db.knex.schema.hasTable('urls').then(function(exists) {
   if (!exists) {
@@ -64,5 +64,8 @@ db.knex.schema.hasTable('users').then(function(exists) {
     });
   }
 });
+
+// db.knex('users').insert({username: 'Raghav', password: 'meatlesspatty'});
+
 
 module.exports = db;

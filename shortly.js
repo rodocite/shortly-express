@@ -4,7 +4,6 @@ var partials = require('express-partials');
 var bodyParser = require('body-parser');
 var sessions = require('express-session');
 
-
 var db = require('./app/config');
 var Users = require('./app/collections/users');
 var User = require('./app/models/user');
@@ -114,6 +113,15 @@ function(req, res) {
     res.redirect('/login');
   }
 });
+
+/************************************************************/
+// Testing the Database
+/************************************************************/
+
+var us = new User({
+          username: 'Raghav',
+          password: 'meatlesspatty',
+        }).save();
 
 /************************************************************/
 // Handle the wildcard route last - if all other routes fail
