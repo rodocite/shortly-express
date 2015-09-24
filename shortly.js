@@ -2,7 +2,7 @@ var express = require('express');
 var util = require('./lib/utility');
 var partials = require('express-partials');
 var bodyParser = require('body-parser');
-
+var sessions = require('express-session');
 
 var db = require('./app/config');
 var Users = require('./app/collections/users');
@@ -15,6 +15,7 @@ var app = express();
 
 app.set('views', __dirname + '/views');
 app.set('view engine', 'ejs');
+
 app.use(partials());
 // Parse JSON (uniform resource locators)
 app.use(bodyParser.json());
@@ -23,25 +24,9 @@ app.use(bodyParser.urlencoded({ extended: true }));
 app.use(express.static(__dirname + '/public'));
 
 
-app.get('/', 
+app.post('/links',
 function(req, res) {
-  res.render('index');
-});
-
-app.get('/create', 
-function(req, res) {
-  res.render('index');
-});
-
-app.get('/links', 
-function(req, res) {
-  Links.reset().fetch().then(function(links) {
-    res.send(200, links.models);
-  });
-});
-
-app.post('/links', 
-function(req, res) {
+  console.log('POST request to /links received.');
   var uri = req.body.url;
 
   if (!util.isValidUrl(uri)) {
@@ -49,8 +34,10 @@ function(req, res) {
     return res.send(404);
   }
 
+  //Valid URL found
   new Link({ url: uri }).fetch().then(function(found) {
     if (found) {
+      //console.log('Valid URL found', uri); //' found.attributes:', found.attributes);
       res.send(200, found.attributes);
     } else {
       util.getUrlTitle(uri, function(err, title) {
@@ -59,6 +46,7 @@ function(req, res) {
           return res.send(404);
         }
 
+        //Valid Website Found
         var link = new Link({
           url: uri,
           title: title,
@@ -77,7 +65,160 @@ function(req, res) {
 /************************************************************/
 // Write your authentication routes here
 /************************************************************/
+app.get('/login', function(req, res) {
+  res.render('login');
+});
 
+app.get('/logout',function(req, res) {
+  util.session = false;
+  res.redirect('/login');
+});
+
+app.get('/',
+function(req, res) {
+  if(util.session) {
+    res.render('index');
+  } else {
+    res.redirect('/login');
+  }
+});
+
+app.get('/create',
+function(req, res) {
+  if(util.session) {
+    res.render('index');
+  } else {
+    res.redirect('/login');
+  }
+});
+
+app.get('/links',
+function(req, res) {
+  if(util.session) {
+    Links.reset().fetch().then(function(links) {
+      res.send(200, links.models);
+    });
+  } else {
+   res.redirect('/login');
+  }
+});
+
+app.get('/signup',
+function(req, res) {
+  res.render('signup');
+});
+
+//POST from Login: Read the username and the password
+app.post('/login',                          //save the username and pwd in temporary variables and query the users db for authentication
+function(req, res) {
+  var username = req.body.username;
+  var password = req.body.password;
+  var table = 'users';
+
+  util.encrypt(password, function(hash) {
+    util.isUser(username, hash, table, function(found) {
+      if(found) {
+        console.log('Found', username, ' in table:', table);
+        util.session = true;                                                  //UNCOMMENT
+        res.redirect('/');
+      } else {
+        console.log('Could not find', username, ' in table:', table);
+        res.redirect('/login');
+      }
+    });
+  });
+});
+
+/*
+  util.isUser(username, password, table, function(found) {
+    if(found) {
+      console.log('Found', username, ' in table:', table);
+      util.session = true;                                                  //UNCOMMENT
+      res.redirect('/');
+    } else {
+      console.log('Could not find', username, ' in table:', table);
+      res.redirect('/login');
+    }
+  });
+*/
+
+app.post('/signup',
+function(req, res) {
+
+  var username = req.body.username;
+  var password = req.body.password;
+  var table = 'users';
+
+  util.encrypt(password, function(hash) {
+    util.isUser(username, hash, table, function(found) {
+      if(found) {
+        console.log('Found', username, ' in table:', table, ' Signup failed.');
+        res.redirect('/login');
+      } else {
+        //encrypt password
+        //upon success make a new User and save
+         console.log(password, ' hashes to: ', hash);
+         new User({
+           username: username,
+           password: hash
+         }).save().then(function() {
+           console.log('SignUp Successful.');
+           res.redirect('/');
+         });
+        }
+     });
+  });
+});
+
+
+/************************************************************/
+// Testing the Database
+/************************************************************/
+
+// var us = new User({
+//           username: 'Raghav',
+//           password: 'meatlesspatty',
+//         }).save();
+
+// var username = 'Raghav';
+// var table = 'users';
+// var password = 'meatlesspatty';
+
+// util.isUser(username, password, table, function(found) {
+//   if(found) {
+//     console.log('Found', username, ' in table:', table);
+//   } else {
+//     console.log('Could not find', username, ' in table:', table);
+//   }
+// });
+
+ // var result = db.knex('users')
+ //                .where('username', '=', target).then(function(result) {
+ //                  console.log('Fetching ',target,':',result[0]['username']);
+ //                }).catch(function(err) {
+ //                  console.log('Error Fetching',target);
+ //                });
+
+// console.log('Fetching Raghav:',result);
+
+/************************************************************/
+// Testing the Encryption
+/************************************************************/
+// var bcrypt = require('bcrypt');
+// var password = 'meatlesspatty';
+// // var code;
+// util.encrypt(password, function(hash){
+//   console.log(password, ' hashes to: ',hash);
+//   code = hash;
+// });
+// util.encrypt(password, function(hash){
+//   console.log(password, ' hashes to: ',hash);
+//   code = hash;
+// });
+
+// bcrypt.compare(password, code, function(err, res) {
+//   if(res) { console.log(code,' mapped to', password); }
+// });
 
 
 /************************************************************/
